@@ -44,4 +44,3 @@ The AI uses the **Minimax algorithm** enhanced with **alpha-beta pruning** to ev
 
 ```bash
 python main.py
-
