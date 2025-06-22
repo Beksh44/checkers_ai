@@ -1,6 +1,7 @@
-# 4x4 Checkers with AI
+# Checkers with AI – 4×4 or 8×8
 
-This is a Python implementation of a simplified Checkers game on a 4×4 board, featuring:
+
+This is a Python implementation of a simplified Checkers game on a 4×4 or 8x8 board(You can easily switch between board sizes by changing the **BOARD_SIZE** variable in main.py), featuring:
 
 - 🎮 Playable GUI using Tkinter  
 - 🧠 AI opponent using the Minimax algorithm with alpha-beta pruning  
