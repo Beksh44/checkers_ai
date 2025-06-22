@@ -1,4 +1,4 @@
-def get_ai_move(board, depth=15):
+def get_ai_move(board, depth=8):
     """
     Determines the best move for the AI using the minimax algorithm.
 

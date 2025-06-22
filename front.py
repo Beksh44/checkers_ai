@@ -5,7 +5,6 @@ import tkinter as tk
 import time
 
 images = {}
-ROWS, COLS = 4, 4
 
 
 def load_piece_images(cell_size):
@@ -39,7 +38,7 @@ class GameGUI:
     - Handling game resets and end popups
     """
 
-    def __init__(self, root, cell_size):
+    def __init__(self, root, cell_size, board = '8x8'):
         """
         Initializes the game interface.
 
@@ -47,18 +46,25 @@ class GameGUI:
             root (tk.Tk): The root window for the application.
             cell_size (int): The pixel dimension of each board square.
         """
-        self.canvas = tk.Canvas(root, width=COLS * cell_size, height=ROWS * cell_size)
+        # Initialize game logic
+        self.board = Board(board=board)
+        if board == '4x4':
+            self.rows, self.cols = 4, 4
+        else:
+            self.rows, self.cols = 8, 8
+
+        self.canvas = tk.Canvas(root, width=self.cols * cell_size, height=self.rows * cell_size)
         self.canvas.pack()
         self.cell_size = cell_size
 
         self.draw_grid()  # Draw checkered board
-        self.board = Board()  # Initialize game logic
+
         self.piece_map = {}  # Maps backend pieces to GraphicalPiece objects
 
         self.game_over = False
 
         # Show start screen and trigger delayed AI move
-        self.popup(lambda: self.canvas.after(2000, self.ai_move), start_menu=True, text=None)
+        self.popup(lambda: self.canvas.after(300, self.ai_move), start_menu=True, text=None)
 
         # Create graphical pieces
         for row in self.board.board:
@@ -75,7 +81,7 @@ class GameGUI:
         if self.game_over:
             return
 
-        best_move = get_ai_move(self.board)
+        best_move = get_ai_move(self.board, depth=15 if self.rows == 4 else 7)
         if not best_move:
             return
 
@@ -165,8 +171,8 @@ class GameGUI:
         """
         Draws the checkered board onto the canvas using alternating gray and white squares.
         """
-        for row in range(ROWS):
-            for col in range(COLS):
+        for row in range(self.rows):
+            for col in range(self.cols):
                 x1 = col * self.cell_size
                 y1 = row * self.cell_size
                 x2 = x1 + self.cell_size
@@ -189,8 +195,8 @@ class GameGUI:
         """
         screen = tk.Frame(
             self.canvas.master,
-            width=COLS * self.cell_size,
-            height=ROWS * self.cell_size,
+            width=self.cols * self.cell_size,
+            height=self.rows * self.cell_size,
             bg="#1c1c1c"
         )
         screen.place(relx=0.5, rely=0.5, anchor="center")
@@ -258,7 +264,7 @@ class GameGUI:
                     gpiece = GraphicalPiece(self.canvas, piece, self)
                     self.piece_map[piece] = gpiece
 
-        self.canvas.after(2000, self.ai_move)
+        self.canvas.after(300, self.ai_move)
 
 
 class GraphicalPiece:
@@ -299,8 +305,8 @@ class GraphicalPiece:
         # Allow only black pieces (player-controlled) to be draggable
         if self.piece.color == "black":
             self.canvas.tag_bind(self.piece_id, "<ButtonPress-1>", self.on_drag_start)
-            self.canvas.tag_bind(self.piece_id, "<B1-Motion>", self.on_drag)
-            self.canvas.tag_bind(self.piece_id, "<ButtonRelease-1>", self.on_drag_end)
+            self.canvas.tag_bind(self.piece_id, "<B1-Motion>", lambda event: self.on_drag(event, multiply=gui.rows))
+            self.canvas.tag_bind(self.piece_id, "<ButtonRelease-1>", lambda event: self.on_drag_end(event, max_row=gui.rows - 1, max_col=gui.cols - 1))
 
     def remove_from_board(self):
         """
@@ -318,15 +324,15 @@ class GraphicalPiece:
         self.start_x = event.x
         self.start_y = event.y
 
-    def on_drag(self, event):
+    def on_drag(self, event, multiply):
         """
         Called during dragging. Moves the piece image on the canvas.
 
         Args:
             event (tk.Event): The current mouse event.
         """
-        x = min(max(event.x, 0), self.gui.cell_size * 4)
-        y = min(max(event.y, 0), self.gui.cell_size * 4)
+        x = min(max(event.x, 0), self.gui.cell_size * multiply)
+        y = min(max(event.y, 0), self.gui.cell_size * multiply)
         dx = x - self.start_x
         dy = y - self.start_y
         self.canvas.move(self.piece_id, dx, dy)
@@ -343,14 +349,13 @@ class GraphicalPiece:
             self.piece.position[0] * self.gui.cell_size + self.gui.cell_size // 2
         )
 
-    def on_drag_end(self, event):
+    def on_drag_end(self, event, max_col = 7, max_row = 7):
         """
         Called when the player drops a piece. Attempts to make the move.
 
         Args:
             event (tk.Event): The mouse release event.
         """
-        max_row, max_col = 3, 3  # Grid limits for 4x4 board
         new_col = min(max(0, event.x // self.gui.cell_size), max_col)
         new_row = min(max(0, event.y // self.gui.cell_size), max_row)
 

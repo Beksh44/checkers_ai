@@ -17,14 +17,19 @@ class Board:
         board (list of lists): 2D array representing the game board.
         no_progress_counter (int): Counter tracking number of moves without capture or promotion.
     """
-    def __init__(self):
+    def __init__(self, board = '8x8'):
         self.white_pieces = []
         self.black_pieces = []
         self.last_move_color = 'black'
-        self.board = self.create_board()
+
+        if board == '4x4':
+            self.board = self.create_board_4x4()
+        elif board == '8x8':
+            self.board = self.create_board_8x8()
+
         self.no_progress_counter = 0 # For detecting draw by inactivity
 
-    def create_board(self) -> list:
+    def create_board_4x4(self) -> list:
         """
         Initializes a 4x4 board with two white and two black pieces in starting positions.
          Returns:
@@ -43,6 +48,32 @@ class Board:
             man = Man('black', (3, col), self)
             board[3][col] = man
             self.black_pieces.append(man)
+
+        return board
+
+    def create_board_8x8(self) -> list:
+        """
+        Initializes a 8x8 board with two white and two black pieces in starting positions.
+         Returns:
+            list: The initialized 8x8 board.
+        """
+        board = [[None for _ in range(8)] for _ in range(8)]
+
+        # Place white pieces
+        for row in range(3):
+            for col in range(8):
+                if (row + col) % 2 == 1:
+                    man = Man('white', (row, col), self)
+                    board[row][col] = man
+                    self.white_pieces.append(man)
+
+        # Place black pieces
+        for row in range(5, 8):
+            for col in range(8):
+                if (row + col) % 2 == 1:
+                    man = Man('black', (row, col), self)
+                    board[row][col] = man
+                    self.black_pieces.append(man)
 
         return board
 
